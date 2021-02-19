@@ -1,40 +1,47 @@
-# ************************************************************************ # * Program name : sieve * # * Description : this program prints all the prime numbers below 1000 * # ************************************************************************
 .bss
-NUMBERS: .skip 1000 # memory space for the number table
-.global main
-# ************************************************************************ # * Subroutine : main * # * Description : application entry point * # ************************************************************************
-  
+NUMBERS .skip 1000 
+
 .text
-formatstr : .asciz ”%d\n” # format string for number printing
-main :
-# Initialize the number
-movq $0, %rbx
-# The sieve algorithm:
-pushq $2
-table :
-loop1 :
-pushq %rbp # store the caller ’s base pointer movq %rsp , %rbp # initialize the base pointer
-# initialize ’i’ to 0.
-# initialize ’number’ to 2 on stack
-movb $1, NUMBERS(%rbx) # set number table entry ’i’ to ’true’
-loop2 :
-incq %rbx #increment ’i’ cmpq $1000, %rbx # while ’i’ < 1000
-jl loop1 # go to start of loop1
-movq =8(%rbp) , %rbx # load ’number ’ into a register
-cmpb $1 , NUMBERS(%rbx ) # compare NUMBERS[ number ] to ’1 ’
-jne lp2end # if not equal, jump to end of loop 2
-movq $formatstr , %rdi # f i r s t argument : formatstr movq %rbx, %rsi # second argument: the number
-movq $0 , %rax # no vector arguments call printf # print the number
-movq =8(%rbp), %rbx # ’multiple’ := ’number’ shlq $1, %rbx # multiply ’multiple’ by 2
-loop3 :
-cmpq $1000, %rbx # compare ’multiple’ to 1000
-jge lp2end # goto end of loop2 if greater/equal
-movb $0, NUMBERS(%rbx) # set number table entry to ’false’ addq =8(%rbp), %rbx # add another ’number’ to ’multiple’
-lp2end :
-jmp loop3 # jump to the beginning of loop 3
-movq =8(%rbp) , %rbx # load ’number ’ into a register incq %rbx # increment ’number ’ by one
-movq %rbx, =8(%rbp) # store ’number’ on the stack cmpq $1000, %rbx # compare ’number’ to 1000
-jl loop2 # if smaller , repeat loop2
-end :
-mov $0 , %rdi # load program exit code
-call exit # exit the program
+formatstr: .asciz ”%d\n”
+
+.global main
+
+_main:
+        pushq %rbp
+        movq %rsp, %rbp
+        movq $0, %rbx
+
+loo1:
+        movb $1, NUMBERS(%rbx)
+        incq %rbx
+        cmpq $1000, %rbx
+        jl loop1
+
+loop2:
+        movq -8 (%rbp), %rbx
+        cmpq $1, NUMBERS(%rbx)
+        jne lp2end
+        movq $formatstr, %rdi
+        movq %rbx, %rsi
+        movq $0, %rax
+        call printf
+        movq -8(%rbp), %rbx
+        shlq $1, %rbx
+
+loop3:
+        cmpq $1000, %rbx
+        jge lp2end
+        movb $0, NUMBERS(%rbx)
+        addq -8(%rbp), %rbx
+        jmp loop3
+
+lp2end:
+        movq -8(%rbp), %rbx
+        incq %rbx
+        movq %rbx, -8(%rbp)
+        cmpq $1000, %rbx
+        jl loop2
+
+end:
+        mov $0, %rdi
+        call _exit
